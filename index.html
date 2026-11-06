@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+  
+  <!-- Google AdSense -->
+  <meta name="google-adsense-account" content="ca-pub-7963880628277539">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7963880628277539" crossorigin="anonymous"></script>
+
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PGR4Y0TVNP"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-PGR4Y0TVNP');
+  </script>
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Snakes & Ladders: Ultimate Edition</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- PeerJS CDN for WebRTC Multiplayer -->
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <!-- Canvas Confetti CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            outfit: ['Outfit', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#092e58',
+              800: '#071e3d',
+              900: '#030d1b'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * {
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+      color: #f8fafc;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* Glassmorphism Styles */
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    /* 3D Dice Styling */
+    .scene {
+      width: 60px;
+      height: 60px;
+      perspective: 400px;
+    }
+    .cube {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 1s cubic-bezier(0.2, 0.8, 0.3, 1);
+    }
+    .cube__face {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(145deg, #ffffff, #e2e8f0);
+      border: 2px solid #cbd5e1;
+      border-radius: 12px;
+      display: grid;
+      grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+      padding: 6px;
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .pip {
+      display: block;
+      background-color: #0f172a;
+      border-radius: 50%;
+      align-self: center;
+      justify-self: center;
+      width: 10px;
+      height: 10px;
+      box-shadow: inset 0 1px 2px rgba(255,255,255,0.8);
+    }
+    .pip.red { background-color: #ef4444; }
+
+    /* Dice Face Rotations */
+    .cube__face--1 { transform: rotateY(0deg) translateZ(30px); }
+    .cube__face--6 { transform: rotateY(180deg) translateZ(30px); }
+    .cube__face--3 { transform: rotateY(90deg) translateZ(30px); }
+    .cube__face--4 { transform: rotateY(-90deg) translateZ(30px); }
+    .cube__face--5 { transform: rotateX(-90deg) translateZ(30px); }
+    .cube__face--2 { transform: rotateX(90deg) translateZ(30px); }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.2);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.2);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255,255,255,0.4);
+    }
+
+    /* Glow Animations */
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.5), inset 0 0 10px rgba(59, 130, 246, 0.3); }
+      50% { box-shadow: 0 0 25px rgba(59, 130, 246, 0.8), inset 0 0 15px rgba(59, 130, 246, 0.5); }
+    }
+    .active-turn-glow {
+      animation: pulse-glow 2s infinite;
+    }
+
+    /* Token Smooth Movement */
+    .player-token {
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.6));
+    }
+
+    /* Board Tile Colors */
+    .tile-even { background: rgba(30, 41, 59, 0.6); }
+    .tile-odd { background: rgba(15, 23, 42, 0.6); }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen text-slate-100 antialiased selection:bg-indigo-500 selection:text-white">
+
+  <!-- TOP HEADER / NAV -->
+  <header class="w-full glass-panel sticky top-0 z-40 px-4 py-3 border-b border-slate-700/50">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <!-- Logo & Title -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+          <i class="fa-solid font-black text-white text-xl">🐍</i>
+        </div>
+        <div>
+          <h1 class="text-xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-amber-300 via-rose-300 to-indigo-200">
+            SNAKES & LADDERS
+          </h1>
+          <div class="flex items-center space-x-2 text-xs text-slate-400">
+            <span id="mode-badge" class="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-medium">Local VS AI</span>
+            <span id="room-badge" class="hidden px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium cursor-pointer" onclick="copyRoomCode()">
+              Room: <span id="room-code-display">----</span> <i class="fa-regular fa-copy ml-1"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Action Controls -->
+      <div class="flex items-center space-x-2 sm:space-x-3">
+        <button id="btn-bgm" onclick="toggleBGM()" class="p-2.5 rounded-xl glass-card hover:bg-slate-700/50 text-slate-300 hover:text-white transition" title="Toggle Music">
+          <i id="icon-bgm" class="fa-solid fa-music"></i>
+        </button>
+        <button id="btn-sfx" onclick="toggleSFX()" class="p-2.5 rounded-xl glass-card hover:bg-slate-700/50 text-slate-300 hover:text-white transition" title="Toggle Sound FX">
+          <i id="icon-sfx" class="fa-solid fa-volume-high"></i>
+        </button>
+        <button onclick="openModal('modal-settings')" class="p-2.5 rounded-xl glass-card hover:bg-slate-700/50 text-slate-300 hover:text-white transition" title="Settings">
+          <i class="fa-solid fa-gear"></i>
+        </button>
+        <button onclick="toggleFullscreen()" class="p-2.5 rounded-xl glass-card hover:bg-slate-700/50 text-slate-300 hover:text-white transition hidden sm:block" title="Fullscreen">
+          <i class="fa-solid fa-expand"></i>
+        </button>
+        <button onclick="openModal('modal-setup')" class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm shadow-lg shadow-indigo-600/30 transition flex items-center space-x-1">
+          <i class="fa-solid fa-plus text-xs"></i>
+          <span class="hidden sm:inline">New Game</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN GAME WRAPPER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-2 sm:p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-start">
+    
+    <!-- LEFT SIDEBAR: PLAYERS & LEADERBOARD (Desktop 3-Cols, Responsive) -->
+    <section class="lg:col-span-3 flex flex-col gap-4 order-2 lg:order-1">
+      
+      <!-- Current Turn Card -->
+      <div class="glass-panel rounded-2xl p-4 flex flex-col items-center justify-center text-center relative overflow-hidden">
+        <div id="turn-banner-glow" class="absolute inset-0 bg-indigo-500/10 blur-xl"></div>
+        <span class="text-xs uppercase tracking-widest text-slate-400 font-semibold mb-1">Current Turn</span>
+        <div id="active-player-display" class="flex items-center space-x-3 my-2">
+          <div id="active-avatar" class="w-12 h-12 rounded-full border-2 border-indigo-400 flex items-center justify-center text-2xl shadow-md bg-slate-800">
+            🎲
+          </div>
+          <div class="text-left">
+            <h3 id="active-name" class="font-bold text-lg leading-tight text-white">Select New Game</h3>
+            <span id="active-status" class="text-xs text-indigo-300">Ready to start</span>
+          </div>
+        </div>
+        
+        <!-- Interactive Dice Section -->
+        <div class="mt-3 flex flex-col items-center w-full">
+          <div class="scene my-2 cursor-pointer" onclick="triggerHumanRoll()">
+            <div id="cube" class="cube">
+              <!-- Face 1 -->
+              <div class="cube__face cube__face--1">
+                <span class="pip pip.red grid-area-5" style="grid-area: 2 / 2"></span>
+              </div>
+              <!-- Face 2 -->
+              <div class="cube__face cube__face--2">
+                <span class="pip" style="grid-area: 1 / 1"></span>
+                <span class="pip" style="grid-area: 3 / 3"></span>
+              </div>
+              <!-- Face 3 -->
+              <div class="cube__face cube__face--3">
+                <span class="pip" style="grid-area: 1 / 1"></span>
+                <span class="pip" style="grid-area: 2 / 2"></span>
+                <span class="pip" style="grid-area: 3 / 3"></span>
+              </div>
+              <!-- Face 4 -->
+              <div class="cube__face cube__face--4">
+                <span class="pip" style="grid-area: 1 / 1"></span>
+                <span class="pip" style="grid-area: 1 / 3"></span>
+                <span class="pip" style="grid-area: 3 / 1"></span>
+                <span class="pip" style="grid-area: 3 / 3"></span>
+              </div>
+              <!-- Face 5 -->
+              <div class="cube__face cube__face--5">
+                <span class="pip" style="grid-area: 1 / 1"></span>
+                <span class="pip" style="grid-area: 1 / 3"></span>
+                <span class="pip" style="grid-area: 2 / 2"></span>
+                <span class="pip" style="grid-area: 3 / 1"></span>
+                <span class="pip" style="grid-area: 3 / 3"></span>
+              </div>
+              <!-- Face 6 -->
+              <div class="cube__face cube__face--6">
+                <span class="pip" style="grid-area: 1 / 1"></span>
+                <span class="pip" style="grid-area: 1 / 3"></span>
+                <span class="pip" style="grid-area: 2 / 1"></span>
+                <span class="pip" style="grid-area: 2 / 3"></span>
+                <span class="pip" style="grid-area: 3 / 1"></span>
+                <span class="pip" style="grid-area: 3 / 3"></span>
+              </div>
+            </div>
+          </div>
+
+          <button id="btn-roll" onclick="triggerHumanRoll()" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-400 hover:to-rose-500 text-white font-extrabold text-base shadow-lg shadow-rose-600/30 active:scale-95 transition transform disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+            <i class="fa-solid fa-dice mr-2"></i> ROLL DICE
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Player Roster -->
+      <div class="glass-panel rounded-2xl p-4 flex-1 flex flex-col">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-3 flex justify-between items-center">
+          <span>Players (<span id="player-count-num">0</span>)</span>
+          <i class="fa-solid fa-users text-slate-500"></i>
+        </h3>
+        <div id="player-list" class="space-y-2 max-h-60 lg:max-h-80 overflow-y-auto pr-1">
+          <!-- Dynamically filled -->
+        </div>
+      </div>
+    </section>
+
+    <!-- CENTER: GAME BOARD (Desktop 6-Cols) -->
+    <section class="lg:col-span-6 flex flex-col items-center justify-center order-1 lg:order-2">
+      <div class="w-full max-w-[600px] aspect-square relative rounded-2xl glass-panel p-2 sm:p-3 shadow-2xl border border-slate-700/80">
+        
+        <!-- Scalable SVG Board Layering -->
+        <div id="board-container" class="w-full h-full relative rounded-xl overflow-hidden border border-slate-800 shadow-inner">
+          
+          <!-- Board Grid Tiles (HTML/CSS Overlay) -->
+          <div id="board-grid" class="w-full h-full grid grid-cols-10 grid-rows-10">
+            <!-- 100 Squares generated via JS -->
+          </div>
+
+          <!-- SVG Overlay for Snakes, Ladders, and Token Movements -->
+          <svg id="board-svg" class="absolute inset-0 w-full h-full pointer-events-none z-10" viewBox="0 0 1000 1000" preserveAspectRatio="none">
+            <!-- SVG Definitions for Gradients, Shadows, Filters -->
+            <defs>
+              <!-- Ladder Metallic Shading -->
+              <linearGradient id="ladderGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#fbbf24" />
+                <stop offset="50%" stop-color="#f59e0b" />
+                <stop offset="100%" stop-color="#b45309" />
+              </linearGradient>
+
+              <!-- Snake Gradients -->
+              <linearGradient id="snakeGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ef4444" />
+                <stop offset="100%" stop-color="#7f1d1d" />
+              </linearGradient>
+              <linearGradient id="snakeGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#10b981" />
+                <stop offset="100%" stop-color="#064e3b" />
+              </linearGradient>
+              <linearGradient id="snakeGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#a855f7" />
+                <stop offset="100%" stop-color="#581c87" />
+              </linearGradient>
+
+              <!-- Drop Shadows for SVG elements -->
+              <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+                <feDropShadow dx="3" dy="5" stdDeviation="4" flood-color="#000000" flood-opacity="0.6"/>
+              </filter>
+            </defs>
+
+            <!-- Rendered Snakes and Ladders Paths -->
+            <g id="ladders-group"></g>
+            <g id="snakes-group"></g>
+          </svg>
+
+          <!-- Tokens Overlay Container -->
+          <div id="tokens-container" class="absolute inset-0 pointer-events-none z-20">
+            <!-- Animated Player Tokens rendered here -->
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- RIGHT SIDEBAR: FEED, QUICK REACTION & CHAT (Desktop 3-Cols) -->
+    <section class="lg:col-span-3 flex flex-col gap-4 order-3">
+      
+      <!-- Quick Reactions (Emoji & Phrases) -->
+      <div class="glass-panel rounded-2xl p-4">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-2 flex justify-between items-center">
+          <span>Quick Reaction</span>
+          <i class="fa-solid fa-comments text-slate-500"></i>
+        </h3>
+        <div class="grid grid-cols-4 gap-2 mb-2">
+          <button onclick="sendReaction('👏')" class="p-2 rounded-lg glass-card hover:bg-slate-700/60 text-lg text-center transition">👏</button>
+          <button onclick="sendReaction('😂')" class="p-2 rounded-lg glass-card hover:bg-slate-700/60 text-lg text-center transition">😂</button>
+          <button onclick="sendReaction('😱')" class="p-2 rounded-lg glass-card hover:bg-slate-700/60 text-lg text-center transition">😱</button>
+          <button onclick="sendReaction('🐍')" class="p-2 rounded-lg glass-card hover:bg-slate-700/60 text-lg text-center transition">🐍</button>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <button onclick="sendReaction('Good Luck!')" class="p-2 rounded-lg glass-card hover:bg-slate-700/60 font-semibold text-slate-300 transition text-center truncate">Good Luck!</button>
+          <button onclick="sendReaction('Oops!')" class="p-2 rounded-lg glass-card hover:bg-slate-700/60 font-semibold text-slate-300 transition text-center truncate">Oops!</button>
+          <button onclick="sendReaction('Nice Move!')" class="p-2 rounded-lg glass-card hover:bg-slate-700/60 font-semibold text-slate-300 transition text-center truncate">Nice Move!</button>
+          <button onclick="sendReaction('Almost there!')" class="p-2 rounded-lg glass-card hover:bg-slate-700/60 font-semibold text-slate-300 transition text-center truncate">Almost there!</button>
+        </div>
+      </div>
+
+      <!-- Live Game Event Feed Log -->
+      <div class="glass-panel rounded-2xl p-4 flex-1 flex flex-col h-64 lg:h-80">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-2 flex justify-between items-center">
+          <span>Activity Log</span>
+          <i class="fa-solid fa-list-ul text-slate-500"></i>
+        </h3>
+        <div id="game-log" class="flex-1 overflow-y-auto space-y-2 text-xs pr-1 font-sans">
+          <div class="p-2 rounded bg-indigo-500/10 border border-indigo-500/20 text-indigo-200">
+            Welcome to Snakes & Ladders Ultimate Edition! Start or Join a game.
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- MODAL 1: NEW GAME / MULTIPLAYER SETUP -->
+  <div id="modal-setup" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="glass-panel w-full max-w-lg rounded-3xl p-6 border border-slate-700/60 shadow-2xl transform scale-95 transition-transform duration-300">
+      
+      <div class="flex items-center justify-between border-b border-slate-700/60 pb-4 mb-4">
+        <h2 class="text-xl font-black tracking-wide text-white flex items-center space-x-2">
+          <span>🎮 GAME SETUP</span>
+        </h2>
+        <button onclick="closeModal('modal-setup')" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Tabs: Local vs Online -->
+      <div class="flex rounded-xl bg-slate-900/60 p-1 mb-6 border border-slate-800">
+        <button id="tab-btn-local" onclick="switchSetupTab('local')" class="flex-1 py-2 rounded-lg font-bold text-sm transition bg-indigo-600 text-white shadow">
+          VS AI / Local
+        </button>
+        <button id="tab-btn-online" onclick="switchSetupTab('online')" class="flex-1 py-2 rounded-lg font-bold text-sm transition text-slate-400 hover:text-white">
+          Online P2P
+        </button>
+      </div>
+
+      <!-- LOCAL SETUP PANEL -->
+      <div id="setup-panel-local" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Human Player Name</label>
+          <input id="input-player-name" type="text" value="Player 1" class="w-full px-4 py-2.5 rounded-xl bg-slate-900/80 border border-slate-700 text-white focus:outline-none focus:border-indigo-500 text-sm">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Total Players (2 - 10)</label>
+          <div class="flex items-center space-x-3">
+            <input id="input-player-count" type="range" min="2" max="10" value="4" oninput="document.getElementById('player-count-val').innerText = this.value" class="w-full accent-indigo-500 h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+            <span id="player-count-val" class="font-extrabold text-xl text-indigo-400 min-w-[2rem]">4</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">AI Difficulty</label>
+          <select id="select-ai-difficulty" class="w-full px-4 py-2.5 rounded-xl bg-slate-900/80 border border-slate-700 text-white focus:outline-none focus:border-indigo-500 text-sm">
+            <option value="easy">Easy (Random choices)</option>
+            <option value="normal" selected>Normal (Standard turn speeds)</option>
+            <option value="competitive">Competitive (Fast turns, taunts)</option>
+          </select>
+        </div>
+
+        <button onclick="startLocalGame()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-base shadow-lg shadow-teal-600/30 transition transform active:scale-98 mt-4">
+          START LOCAL GAME
+        </button>
+      </div>
+
+      <!-- ONLINE MULTIPLAYER PANEL -->
+      <div id="setup-panel-online" class="space-y-4 hidden">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Your Display Name</label>
+          <input id="input-online-name" type="text" value="Player 1" class="w-full px-4 py-2.5 rounded-xl bg-slate-900/80 border border-slate-700 text-white focus:outline-none focus:border-indigo-500 text-sm">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 pt-2">
+          <button onclick="createOnlineRoom()" class="py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition">
+            <i class="fa-solid fa-house-plus mr-1"></i> Create Room
+          </button>
+          <button onclick="showJoinInput()" class="py-3 px-4 rounded-xl glass-card hover:bg-slate-800 text-slate-200 font-bold text-sm transition border border-slate-600">
+            <i class="fa-solid fa-right-to-bracket mr-1"></i> Join Room
+          </button>
+        </div>
+
+        <div id="join-room-box" class="hidden space-y-3 pt-3 border-t border-slate-700/60">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">Enter Room Code</label>
+          <div class="flex space-x-2">
+            <input id="input-room-code" type="text" placeholder="e.g. A1B2C" class="flex-1 px-4 py-2 rounded-xl bg-slate-900/80 border border-slate-700 text-white focus:outline-none focus:border-indigo-500 text-sm uppercase font-mono tracking-widest">
+            <button onclick="joinOnlineRoom()" class="py-2 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm transition">
+              Join
+            </button>
+          </div>
+        </div>
+
+        <!-- Online Room Lobby Box -->
+        <div id="lobby-box" class="hidden space-y-3 pt-3 border-t border-slate-700/60">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-400 uppercase">Lobby (<span id="lobby-count">1</span>/10)</span>
+            <span class="text-xs text-emerald-400 font-mono" id="lobby-status">Waiting for players...</span>
+          </div>
+          <div id="lobby-players-list" class="space-y-1.5 max-h-36 overflow-y-auto">
+            <!-- Joined players list -->
+          </div>
+          <button id="btn-start-online" onclick="startOnlineGameHost()" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-sm shadow-lg transition hidden">
+            START MULTIPLAYER MATCH
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL 2: SETTINGS -->
+  <div id="modal-settings" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="glass-panel w-full max-w-md rounded-3xl p-6 border border-slate-700/60 shadow-2xl transform scale-95 transition-transform duration-300">
+      <div class="flex items-center justify-between border-b border-slate-700/60 pb-4 mb-4">
+        <h2 class="text-xl font-black text-white flex items-center space-x-2">
+          <span>⚙️ GAME SETTINGS</span>
+        </h2>
+        <button onclick="closeModal('modal-settings')" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="space-y-5">
+        <div>
+          <div class="flex justify-between text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+            <span>Music Volume</span>
+            <span id="val-bgm-vol">50%</span>
+          </div>
+          <input id="slider-bgm" type="range" min="0" max="100" value="50" oninput="updateBGMVolume(this.value)" class="w-full accent-indigo-500 h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+            <span>Sound Effects Volume</span>
+            <span id="val-sfx-vol">80%</span>
+          </div>
+          <input id="slider-sfx" type="range" min="0" max="100" value="80" oninput="updateSFXVolume(this.value)" class="w-full accent-indigo-500 h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+        </div>
+
+        <div class="pt-2 border-t border-slate-700/60 flex justify-between items-center">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Player Statistics</span>
+          <button onclick="resetStats()" class="px-3 py-1.5 rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 text-xs font-bold transition">
+            Reset Stats
+          </button>
+        </div>
+        <div id="stats-display" class="grid grid-cols-2 gap-2 text-xs text-slate-300 bg-slate-900/60 p-3 rounded-xl">
+          <div>Games Played: <span id="stat-played" class="font-bold text-white">0</span></div>
+          <div>Wins: <span id="stat-wins" class="font-bold text-emerald-400">0</span></div>
+          <div>Ladders Climbed: <span id="stat-ladders" class="font-bold text-amber-400">0</span></div>
+          <div>Snakes Bitten: <span id="stat-snakes" class="font-bold text-rose-400">0</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: VICTORY / WINNER ANNOUNCEMENT -->
+  <div id="modal-victory" class="fixed inset-0 bg-slate-950/90 backdrop-blur-lg z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="glass-panel w-full max-w-md rounded-3xl p-6 text-center border border-amber-500/30 shadow-2xl transform scale-95 transition-transform duration-300 relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-b from-amber-500/10 via-transparent to-transparent pointer-events-none"></div>
+
+      <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-amber-500/20 border-2 border-amber-400 flex items-center justify-center text-4xl shadow-lg shadow-amber-500/20">
+        🏆
+      </div>
+
+      <h2 class="text-xs font-extrabold tracking-widest text-amber-400 uppercase mb-1">VICTORY CELEBRATION</h2>
+      <h1 id="winner-name" class="text-3xl font-black text-white tracking-tight mb-2">Player 1 Wins!</h1>
+      <p id="winner-subtext" class="text-sm text-slate-300 mb-6">Conquered all 100 squares with epic luck!</p>
+
+      <div class="flex space-x-3">
+        <button onclick="closeModal('modal-victory'); openModal('modal-setup')" class="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm transition">
+          Play Again
+        </button>
+        <button onclick="closeModal('modal-victory')" class="flex-1 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition">
+          View Board
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- REACTION TOAST NOTIFICATION POPUP -->
+  <div id="reaction-toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none glass-panel px-4 py-3 rounded-2xl flex items-center space-x-3 border border-indigo-500/40 shadow-2xl">
+    <span id="toast-avatar" class="text-2xl">🎲</span>
+    <div>
+      <h4 id="toast-author" class="text-xs font-bold text-indigo-300">Player</h4>
+      <p id="toast-message" class="text-sm font-bold text-white">👏 Good luck!</p>
+    </div>
+  </div>
+
+
+  <!-- MAIN JAVASCRIPT GAME LOGIC -->
+  <script>
+    /* ==========================================================================
+       1. GAME CONSTANTS & BOARD LAYOUT DEFINITION
+       ========================================================================== */
+    const BOARD_SIZE = 10;
+    const TOTAL_SQUARES = 100;
+
+    // Classic Snakes & Ladders Map (Start -> End)
+    const LADDERS = {
+      4: 14,
+      9: 31,
+      20: 38,
+      28: 84,
+      40: 59,
+      51: 67,
+      63: 81,
+      71: 91
+    };
+
+    const SNAKES = {
+      17: 7,
+      54: 34,
+      62: 19,
+      64: 60,
+      87: 24,
+      93: 73,
+      95: 75,
+      99: 78
+    };
+
+    const AVATARS = ['🦊', '🐯', '🐼', '🤖', '🦄', '🐲', '🦁', 'Alien', '🦅', '🦈'];
+    const COLORS = [
+      '#ef4444', '#3b82f6', '#10b981', '#f59e0b', 
+      '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', 
+      '#f97316', '#6366f1'
+    ];
+
+    /* ==========================================================================
+       2. PROCEDURAL WEB AUDIO SYNTHESIZER (No External Asset Dependencies)
+       ========================================================================== */
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.bgmEnabled = true;
+        this.sfxEnabled = true;
+        this.bgmVolume = 0.5;
+        this.sfxVolume = 0.8;
+        this.bgmTimer = null;
+        this.bgmStep = 0;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      playTone(freq, type = 'sine', duration = 0.1, vol = 1) {
+        if (!this.sfxEnabled) return;
+        this.init();
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+          
+          const masterVol = vol * this.sfxVolume;
+          gain.gain.setValueAtTime(masterVol, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + duration);
+        } catch(e) {}
+      }
+
+      playDiceRoll() {
+        if (!this.sfxEnabled) return;
+        this.init();
+        for (let i = 0; i < 6; i++) {
+          setTimeout(() => {
+            this.playTone(150 + Math.random() * 200, 'square', 0.05, 0.4);
+          }, i * 60);
+        }
+      }
+
+      playMove() {
+        this.playTone(440, 'sine', 0.08, 0.5);
+      }
+
+      playLadder() {
+        if (!this.sfxEnabled) return;
+        this.init();
+        const notes = [261.63, 329.63, 392.00, 523.25];
+        notes.forEach((freq, idx) => {
+          setTimeout(() => {
+            this.playTone(freq, 'triangle', 0.15, 0.7);
+          }, idx * 100);
+        });
+      }
+
+      playSnake() {
+        if (!this.sfxEnabled) return;
+        this.init();
+        const notes = [400, 350, 300, 250, 200];
+        notes.forEach((freq, idx) => {
+          setTimeout(() => {
+            this.playTone(freq, 'sawtooth', 0.15, 0.4);
+          }, idx * 90);
+        });
+      }
+
+      playVictory() {
+        if (!this.sfxEnabled) return;
+        this.init();
+        const melody = [523.25, 659.25, 783.99, 1046.50, 783.99, 1046.50];
+        const times = [0, 150, 300, 450, 650, 850];
+        melody.forEach((freq, idx) => {
+          setTimeout(() => {
+            this.playTone(freq, 'triangle', 0.3, 0.8);
+          }, times[idx]);
+        });
+      }
+
+      startBGM() {
+        if (!this.bgmEnabled || this.bgmTimer) return;
+        this.init();
+        // Relaxing Arpeggio Background Soundtrack Sequence
+        const chords = [
+          [261.63, 329.63, 392.00], // C
+          [220.00, 261.63, 329.63], // Am
+          [174.61, 220.00, 261.63], // F
+          [196.00, 246.94, 293.66]  // G
+        ];
+        this.bgmStep = 0;
+        this.bgmTimer = setInterval(() => {
+          if (!this.bgmEnabled) return;
+          const chordIdx = Math.floor(this.bgmStep / 4) % chords.length;
+          const noteIdx = this.bgmStep % 3;
+          const freq = chords[chordIdx][noteIdx];
+          
+          try {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+            
+            const vol = 0.08 * this.bgmVolume;
+            gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.4);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start();
+            osc.stop(this.ctx.currentTime + 0.4);
+          } catch(e) {}
+
+          this.bgmStep++;
+        }, 300);
+      }
+
+      stopBGM() {
+        if (this.bgmTimer) {
+          clearInterval(this.bgmTimer);
+          this.bgmTimer = null;
+        }
+      }
+    }
+
+    const audio = new SoundEngine();
+
+    /* ==========================================================================
+       3. GLOBAL GAME STATE MANAGEMENT
+       ========================================================================== */
+    let gameState = {
+      mode: 'local', // 'local' or 'online'
+      players: [],
+      currentTurnIndex: 0,
+      isRolling: false,
+      isMoving: false,
+      gameOver: false,
+      aiDifficulty: 'normal',
+      hostPeerId: null,
+      myPeerId: null,
+      isHost: false
+    };
+
+    let peer = null;
+    let connections = {}; // Stores WebRTC Data Connections
+
+    let userStats = JSON.parse(localStorage.getItem('snakes_stats') || '{"played":0,"wins":0,"ladders":0,"snakes":0}');
+
+    /* ==========================================================================
+       4. BOARD RENDERING & COORDINATE HELPERS
+       ========================================================================== */
+    function getTileCenterCoords(squareNum) {
+      if (squareNum < 1) squareNum = 1;
+      if (squareNum > 100) squareNum = 100;
+
+      const index = squareNum - 1;
+      const row = Math.floor(index / BOARD_SIZE); // 0 at bottom row
+      let col = index % BOARD_SIZE;
+
+      // Alternating ZigZag pattern
+      if (row % 2 === 1) {
+        col = BOARD_SIZE - 1 - col;
+      }
+
+      // Percentage coordinates (0-100%)
+      const x = (col + 0.5) * 10;
+      const y = (BOARD_SIZE - 1 - row + 0.5) * 10;
+
+      return { x, y, SVGx: x * 10, SVGy: y * 10 };
+    }
+
+    function createBoardUI() {
+      const grid = document.getElementById('board-grid');
+      grid.innerHTML = '';
+
+      // Generate 100 Squares (Rows 9 down to 0)
+      for (let r = BOARD_SIZE - 1; r >= 0; r--) {
+        for (let c = 0; c < BOARD_SIZE; c++) {
+          let col = (r % 2 === 1) ? (BOARD_SIZE - 1 - c) : c;
+          let num = r * BOARD_SIZE + col + 1;
+
+          const isEven = (r + col) % 2 === 0;
+          const tile = document.createElement('div');
+          tile.id = `tile-${num}`;
+          tile.className = `relative flex items-start justify-start p-1 text-[10px] sm:text-xs font-black select-none border border-slate-800/40 ${isEven ? 'tile-even text-slate-400' : 'tile-odd text-slate-500'}`;
+          tile.innerHTML = `<span>${num}</span>`;
+
+          // Start & Goal Accents
+          if (num === 100) {
+            tile.classList.add('bg-gradient-to-br', 'from-amber-500/30', 'to-rose-500/30', 'text-amber-300');
+            tile.innerHTML += `<span class="absolute bottom-1 right-1 text-sm">👑</span>`;
+          } else if (num === 1) {
+            tile.innerHTML += `<span class="absolute bottom-1 right-1 text-[10px] text-emerald-400 font-bold">START</span>`;
+          }
+
+          grid.appendChild(tile);
+        }
+      }
+
+      drawSnakesAndLaddersSVG();
+    }
+
+    function drawSnakesAndLaddersSVG() {
+      const laddersGroup = document.getElementById('ladders-group');
+      const snakesGroup = document.getElementById('snakes-group');
+      laddersGroup.innerHTML = '';
+      snakesGroup.innerHTML = '';
+
+      // Draw Ladders
+      Object.entries(LADDERS).forEach(([start, end]) => {
+        const p1 = getTileCenterCoords(parseInt(start));
+        const p2 = getTileCenterCoords(parseInt(end));
+
+        const ladderSvg = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        ladderSvg.setAttribute('filter', 'url(#shadow)');
+
+        // Side Rails
+        const dx = p2.SVGx - p1.SVGx;
+        const dy = p2.SVGy - p1.SVGy;
+        const len = Math.hypot(dx, dy);
+        const nx = -dy / len * 12; // Offset for rails width
+        const ny = dx / len * 12;
+
+        const rail1 = `<line x1="${p1.SVGx + nx}" y1="${p1.SVGy + ny}" x2="${p2.SVGx + nx}" y2="${p2.SVGy + ny}" stroke="url(#ladderGrad)" stroke-width="8" stroke-linecap="round"/>`;
+        const rail2 = `<line x1="${p1.SVGx - nx}" y1="${p1.SVGy - ny}" x2="${p2.SVGx - nx}" y2="${p2.SVGy - ny}" stroke="url(#ladderGrad)" stroke-width="8" stroke-linecap="round"/>`;
+
+        // Rungs
+        let rungs = '';
+        const numRungs = Math.floor(len / 40);
+        for (let i = 1; i < numRungs; i++) {
+          const t = i / numRungs;
+          const rx = p1.SVGx + t * dx;
+          const ry = p1.SVGy + t * dy;
+          rungs += `<line x1="${rx + nx}" y1="${ry + ny}" x2="${rx - nx}" y2="${ry - ny}" stroke="#cbd5e1" stroke-width="5" stroke-linecap="round"/>`;
+        }
+
+        ladderSvg.innerHTML = rail1 + rail2 + rungs;
+        laddersGroup.appendChild(ladderSvg);
+      });
+
+      // Draw Curved Snakes
+      Object.entries(SNAKES).forEach(([start, end], idx) => {
+        const head = getTileCenterCoords(parseInt(start));
+        const tail = getTileCenterCoords(parseInt(end));
+
+        const snakeSvg = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        snakeSvg.setAttribute('filter', 'url(#shadow)');
+
+        const gradId = `snakeGrad${(idx % 3) + 1}`;
+
+        // Bezier Control points for serpentine curve
+        const midX = (head.SVGx + tail.SVGx) / 2 + (idx % 2 === 0 ? 80 : -80);
+        const midY = (head.SVGy + tail.SVGy) / 2;
+
+        const pathD = `M ${head.SVGx} ${head.SVGy} Q ${midX} ${midY} ${tail.SVGx} ${tail.SVGy}`;
+
+        // Snake Body Path
+        const body = `<path d="${pathD}" fill="none" stroke="url(#${gradId})" stroke-width="22" stroke-linecap="round"/>`;
+        // Pattern overlay
+        const pattern = `<path d="${pathD}" fill="none" stroke="#ffffff" stroke-width="4" stroke-dasharray="10,15" stroke-linecap="round" opacity="0.4"/>`;
+        // Head circle & Eyes
+        const headElem = `
+          <circle cx="${head.SVGx}" cy="${head.SVGy}" r="16" fill="url(#${gradId})" />
+          <circle cx="${head.SVGx - 4}" cy="${head.SVGy - 4}" r="3" fill="#ffffff" />
+          <circle cx="${head.SVGx + 4}" cy="${head.SVGy - 4}" r="3" fill="#ffffff" />
+          <circle cx="${head.SVGx - 4}" cy="${head.SVGy - 4}" r="1.5" fill="#000000" />
+          <circle cx="${head.SVGx + 4}" cy="${head.SVGy - 4}" r="1.5" fill="#000000" />
+        `;
+
+        snakeSvg.innerHTML = body + pattern + headElem;
+        snakesGroup.appendChild(snakeSvg);
+      });
+    }
+
+    /* ==========================================================================
+       5. GAME INIT & PLAYER MANAGEMENT
+       ========================================================================== */
+    function initGame(playerConfigs) {
+      gameState.players = playerConfigs.map((p, idx) => ({
+        id: p.id || `p_${idx}`,
+        name: p.name,
+        avatar: p.avatar || AVATARS[idx % AVATARS.length],
+        color: p.color || COLORS[idx % COLORS.length],
+        isAI: p.isAI || false,
+        position: 0,
+        rank: 0
+      }));
+
+      gameState.currentTurnIndex = 0;
+      gameState.isRolling = false;
+      gameState.isMoving = false;
+      gameState.gameOver = false;
+
+      renderPlayerRoster();
+      renderTokens();
+      updateTurnUI();
+
+      addLogMessage(`🎉 New game started with ${gameState.players.length} players!`, 'system');
+      
+      userStats.played++;
+      saveStats();
+
+      // Check if first player is AI
+      checkAITurn();
+    }
+
+    function renderPlayerRoster() {
+      const list = document.getElementById('player-list');
+      document.getElementById('player-count-num').innerText = gameState.players.length;
+      list.innerHTML = '';
+
+      gameState.players.forEach((p, idx) => {
+        const isCurrent = idx === gameState.currentTurnIndex;
+        const card = document.createElement('div');
+        card.className = `p-2.5 rounded-xl glass-card flex items-center justify-between transition border ${isCurrent ? 'border-indigo-400 bg-indigo-500/10 active-turn-glow' : 'border-slate-800'}`;
+        card.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-base font-bold shadow" style="background-color: ${p.color}">
+              ${p.avatar}
+            </div>
+            <div>
+              <h4 class="text-xs font-bold text-white flex items-center space-x-1">
+                <span>${p.name}</span>
+                ${p.isAI ? '<span class="text-[9px] bg-slate-700 text-slate-300 px-1 rounded">AI</span>' : ''}
+              </h4>
+              <span class="text-[10px] text-slate-400">Tile ${p.position} / 100</span>
+            </div>
+          </div>
+          ${isCurrent ? '<span class="text-xs text-indigo-400 font-bold animate-pulse">TURN</span>' : ''}
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    function renderTokens() {
+      const container = document.getElementById('tokens-container');
+      container.innerHTML = '';
+
+      // Group players by position to offset overlapping tokens
+      const posMap = {};
+      gameState.players.forEach(p => {
+        if (!posMap[p.position]) posMap[p.position] = [];
+        posMap[p.position].push(p);
+      });
+
+      gameState.players.forEach(p => {
+        const token = document.createElement('div');
+        token.id = `token-${p.id}`;
+        token.className = 'player-token absolute w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold shadow-2xl border-2 border-white z-30';
+        token.style.backgroundColor = p.color;
+
+        let coords;
+        if (p.position === 0) {
+          // Offboard Start Dock Area
+          coords = { x: 5, y: 95 };
+        } else {
+          coords = getTileCenterCoords(p.position);
+        }
+
+        // Apply slight offset for multiple tokens on same square
+        const samePosPlayers = posMap[p.position] || [];
+        const pIdx = samePosPlayers.findIndex(item => item.id === p.id);
+        const offsetX = (pIdx % 3 - 1) * 2.5;
+        const offsetY = Math.floor(pIdx / 3) * 2.5;
+
+        token.style.left = `calc(${coords.x}% - 16px + ${offsetX}%)`;
+        token.style.top = `calc(${coords.y}% - 16px + ${offsetY}%)`;
+        token.innerHTML = p.avatar;
+
+        container.appendChild(token);
+      });
+    }
+
+    /* ==========================================================================
+       6. DICE ROLLING & TURN LOGIC
+       ========================================================================== */
+    function triggerHumanRoll() {
+      if (gameState.gameOver || gameState.isRolling || gameState.isMoving) return;
+
+      const activePlayer = gameState.players[gameState.currentTurnIndex];
+      if (activePlayer.isAI) return; // Prevent human from rolling during AI turn
+
+      if (gameState.mode === 'online' && !gameState.isHost) {
+        // Send roll request to Host
+        broadcastToConnections({ type: 'REQ_ROLL', playerId: activePlayer.id });
+        return;
+      }
+
+      executeRoll();
+    }
+
+    function executeRoll() {
+      if (gameState.isRolling || gameState.isMoving) return;
+      gameState.isRolling = true;
+
+      const btnRoll = document.getElementById('btn-roll');
+      btnRoll.disabled = true;
+
+      audio.playDiceRoll();
+
+      // 3D Dice Spin Animation Random Angles
+      const cube = document.getElementById('cube');
+      const diceValue = Math.floor(Math.random() * 6) + 1;
+
+      const rotations = {
+        1: [0, 0],
+        2: [-90, 0],
+        3: [0, -90],
+        4: [0, 90],
+        5: [90, 0],
+        6: [0, 180]
+      };
+
+      const extraSpins = 720 + Math.floor(Math.random() * 360);
+      const [rotX, rotY] = rotations[diceValue];
+
+      cube.style.transform = `rotateX(${rotX + extraSpins}deg) rotateY(${rotY + extraSpins}deg)`;
+
+      setTimeout(() => {
+        gameState.isRolling = false;
+        
+        if (gameState.mode === 'online' && gameState.isHost) {
+          broadcastGameState();
+        }
+
+        processPlayerMove(diceValue);
+      }, 1000);
+    }
+
+    async function processPlayerMove(rollValue) {
+      gameState.isMoving = true;
+      const player = gameState.players[gameState.currentTurnIndex];
+
+      addLogMessage(`🎲 <b>${player.name}</b> rolled a <b>${rollValue}</b>!`, 'move');
+
+      const targetPos = player.position + rollValue;
+
+      if (targetPos > TOTAL_SQUARES) {
+        addLogMessage(`⚠️ Exact roll required to reach 100! ${player.name} stays put.`, 'warn');
+        finishTurn();
+        return;
+      }
+
+      // Step-by-Step Movement
+      for (let i = player.position + 1; i <= targetPos; i++) {
+        player.position = i;
+        renderTokens();
+        audio.playMove();
+        await new Promise(r => setTimeout(r, 220));
+      }
+
+      // Check Snake or Ladder Collision
+      if (LADDERS[player.position]) {
+        const dest = LADDERS[player.position];
+        audio.playLadder();
+        addLogMessage(`🪜 <b>AMAZING!</b> ${player.name} climbed a ladder to ${dest}!`, 'ladder');
+        userStats.ladders++;
+        saveStats();
+        await new Promise(r => setTimeout(r, 400));
+        player.position = dest;
+        renderTokens();
+      } else if (SNAKES[player.position]) {
+        const dest = SNAKES[player.position];
+        audio.playSnake();
+        addLogMessage(`🐍 <b>OOPS!</b> A snake bit ${player.name}! Slid down to ${dest}.`, 'snake');
+        userStats.snakes++;
+        saveStats();
+        await new Promise(r => setTimeout(r, 400));
+        player.position = dest;
+        renderTokens();
+      }
+
+      // Check Win Condition
+      if (player.position === TOTAL_SQUARES) {
+        handleWin(player);
+        return;
+      }
+
+      finishTurn();
+    }
+
+    function finishTurn() {
+      gameState.isMoving = false;
+      
+      // Advance to next turn
+      gameState.currentTurnIndex = (gameState.currentTurnIndex + 1) % gameState.players.length;
+      
+      updateTurnUI();
+      renderPlayerRoster();
+
+      if (gameState.mode === 'online' && gameState.isHost) {
+        broadcastGameState();
+      }
+
+      checkAITurn();
+    }
+
+    function updateTurnUI() {
+      const activePlayer = gameState.players[gameState.currentTurnIndex];
+      document.getElementById('active-avatar').innerText = activePlayer.avatar;
+      document.getElementById('active-avatar').style.backgroundColor = activePlayer.color;
+      document.getElementById('active-name').innerText = activePlayer.name;
+      document.getElementById('active-status').innerText = activePlayer.isAI ? 'AI thinking...' : 'Your turn to roll!';
+
+      const btnRoll = document.getElementById('btn-roll');
+      btnRoll.disabled = activePlayer.isAI || gameState.isRolling || gameState.isMoving;
+    }
+
+    function checkAITurn() {
+      if (gameState.gameOver) return;
+
+      const activePlayer = gameState.players[gameState.currentTurnIndex];
+      if (activePlayer.isAI) {
+        let delay = 1200;
+        if (gameState.aiDifficulty === 'easy') delay = 1500;
+        if (gameState.aiDifficulty === 'competitive') delay = 800;
+
+        setTimeout(() => {
+          if (!gameState.gameOver && gameState.players[gameState.currentTurnIndex].id === activePlayer.id) {
+            executeRoll();
+          }
+        }, delay);
+      }
+    }
+
+    function handleWin(winner) {
+      gameState.gameOver = true;
+      audio.playVictory();
+
+      if (!winner.isAI) {
+        userStats.wins++;
+        saveStats();
+      }
+
+      // Launch Confetti Celebration FX
+      if (typeof confetti === 'function') {
+        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+      }
+
+      document.getElementById('winner-name').innerText = `${winner.avatar} ${winner.name} Wins!`;
+      openModal('modal-victory');
+
+      addLogMessage(`👑 <b>CHAMPION!</b> ${winner.name} reached square 100 and won the game!`, 'system');
+    }
+
+    /* ==========================================================================
+       7. LOGGING & REACTION MESSAGES
+       ========================================================================== */
+    function addLogMessage(msg, type = 'info') {
+      const log = document.getElementById('game-log');
+      const item = document.createElement('div');
+      item.className = 'p-2 rounded-lg glass-card text-xs transition animate-fade-in';
+
+      if (type === 'ladder') item.classList.add('border-l-4', 'border-amber-400', 'bg-amber-500/10');
+      else if (type === 'snake') item.classList.add('border-l-4', 'border-rose-500', 'bg-rose-500/10');
+      else if (type === 'system') item.classList.add('border-l-4', 'border-indigo-400', 'bg-indigo-500/10');
+
+      item.innerHTML = msg;
+      log.appendChild(item);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function sendReaction(text) {
+      const player = gameState.players[0] || { name: 'Player', avatar: '🎲' };
+      showToast(player.avatar, player.name, text);
+
+      if (gameState.mode === 'online') {
+        broadcastToConnections({
+          type: 'REACTION',
+          avatar: player.avatar,
+          author: player.name,
+          message: text
+        });
+      }
+    }
+
+    function showToast(avatar, author, message) {
+      const toast = document.getElementById('reaction-toast');
+      document.getElementById('toast-avatar').innerText = avatar;
+      document.getElementById('toast-author').innerText = author;
+      document.getElementById('toast-message').innerText = message;
+
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      audio.playTone(600, 'sine', 0.1, 0.4);
+
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3000);
+    }
+
+    /* ==========================================================================
+       8. PEERJS WEBRTC MULTIPLAYER INTEGRATION
+       ========================================================================== */
+    function initPeerJS(callback) {
+      if (peer && !peer.destroyed) {
+        callback();
+        return;
+      }
+
+      // Generate random 5-character Room ID
+      const customId = 'SL-' + Math.random().toString(36).substring(2, 7).toUpperCase();
+      
+      try {
+        // Initialize PeerJS with explicit configuration & STUN servers
+        peer = new Peer(customId, {
+          host: '0.peerjs.com',
+          port: 443,
+          path: '/',
+          secure: true,
+          config: {
+            iceServers: [
+              { urls: 'stun:stun.l.google.com:19302' },
+              { urls: 'stun:stun1.l.google.com:19302' }
+            ]
+          },
+          debug: 1
+        });
+
+        peer.on('open', (id) => {
+          gameState.myPeerId = id;
+          callback();
+        });
+
+        peer.on('connection', (conn) => {
+          handleIncomingConnection(conn);
+        });
+
+        peer.on('error', (err) => {
+          console.warn('PeerJS Network warning/error:', err);
+          
+          // Check for security/canvas websocket restrictions or peer disconnection
+          if (err.type === 'browser-incompatible' || err.type === 'peer-unavailable' || err.type === 'disconnected') {
+            addLogMessage(`⚠️ Network Notice: ${err.message || err.type}`, 'warn');
+          } else {
+            showToast('⚠️', 'P2P Restricted', 'WebSockets are restricted in this preview environment. Switched to Local Mode.');
+            addLogMessage(`⚠️ Multiplayer direct WebSocket connections are restricted by host environment security policies. Play in Local VS AI mode or open in a direct browser tab.`, 'warn');
+            
+            // Revert back to local setup cleanly if in setup phase
+            switchSetupTab('local');
+          }
+        });
+      } catch (err) {
+        console.warn('PeerJS Initialization caught error:', err);
+        showToast('⚠️', 'Network Restricted', 'WebSocket connections blocked in this canvas iframe.');
+        addLogMessage(`⚠️ P2P network unavailable due to security policy. Please use Local VS AI mode!`, 'warn');
+        switchSetupTab('local');
+      }
+    }
+
+    function createOnlineRoom() {
+      initPeerJS(() => {
+        gameState.mode = 'online';
+        gameState.isHost = true;
+        gameState.hostPeerId = gameState.myPeerId;
+
+        document.getElementById('room-code-display').innerText = gameState.myPeerId;
+        document.getElementById('room-badge').classList.remove('hidden');
+        document.getElementById('mode-badge').innerText = 'Online P2P Host';
+
+        document.getElementById('lobby-box').classList.remove('hidden');
+        document.getElementById('btn-start-online').classList.remove('hidden');
+
+        // Add Host as player 1
+        const hostName = document.getElementById('input-online-name').value || 'Host Player';
+        gameState.players = [{
+          id: gameState.myPeerId,
+          name: hostName,
+          avatar: AVATARS[0],
+          color: COLORS[0],
+          isAI: false,
+          position: 0
+        }];
+
+        updateLobbyUI();
+        addLogMessage(`🌐 Room created! Share code: <b>${gameState.myPeerId}</b>`, 'system');
+      });
+    }
+
+    function showJoinInput() {
+      document.getElementById('join-room-box').classList.remove('hidden');
+    }
+
+    function joinOnlineRoom() {
+      const roomCode = document.getElementById('input-room-code').value.trim().toUpperCase();
+      if (!roomCode) return;
+
+      initPeerJS(() => {
+        gameState.mode = 'online';
+        gameState.isHost = false;
+        gameState.hostPeerId = roomCode;
+
+        const conn = peer.connect(roomCode);
+        handleIncomingConnection(conn);
+
+        conn.on('open', () => {
+          const myName = document.getElementById('input-online-name').value || 'Guest Player';
+          conn.send({
+            type: 'JOIN_REQ',
+            player: { name: myName, avatar: AVATARS[1], color: COLORS[1] }
+          });
+
+          document.getElementById('room-code-display').innerText = roomCode;
+          document.getElementById('room-badge').classList.remove('hidden');
+          document.getElementById('mode-badge').innerText = 'Online Client';
+          document.getElementById('lobby-box').classList.remove('hidden');
+          document.getElementById('lobby-status').innerText = 'Connected to Host!';
+        });
+      });
+    }
+
+    function handleIncomingConnection(conn) {
+      connections[conn.peer] = conn;
+
+      conn.on('data', (data) => {
+        if (data.type === 'JOIN_REQ' && gameState.isHost) {
+          if (gameState.players.length >= 10) return;
+          const newPlayer = {
+            id: conn.peer,
+            name: data.player.name,
+            avatar: AVATARS[gameState.players.length % AVATARS.length],
+            color: COLORS[gameState.players.length % COLORS.length],
+            isAI: false,
+            position: 0
+          };
+          gameState.players.push(newPlayer);
+          updateLobbyUI();
+          broadcastGameState();
+        } else if (data.type === 'STATE_SYNC') {
+          gameState.players = data.state.players;
+          gameState.currentTurnIndex = data.state.currentTurnIndex;
+          gameState.gameOver = data.state.gameOver;
+          renderPlayerRoster();
+          renderTokens();
+          updateTurnUI();
+        } else if (data.type === 'REQ_ROLL' && gameState.isHost) {
+          executeRoll();
+        } else if (data.type === 'REACTION') {
+          showToast(data.avatar, data.author, data.message);
+        }
+      });
+
+      conn.on('close', () => {
+        delete connections[conn.peer];
+        if (gameState.isHost) {
+          gameState.players = gameState.players.filter(p => p.id !== conn.peer);
+          updateLobbyUI();
+          broadcastGameState();
+        }
+      });
+    }
+
+    function broadcastGameState() {
+      broadcastToConnections({
+        type: 'STATE_SYNC',
+        state: {
+          players: gameState.players,
+          currentTurnIndex: gameState.currentTurnIndex,
+          gameOver: gameState.gameOver
+        }
+      });
+    }
+
+    function broadcastToConnections(data) {
+      Object.values(connections).forEach(conn => {
+        if (conn.open) conn.send(data);
+      });
+    }
+
+    function updateLobbyUI() {
+      document.getElementById('lobby-count').innerText = gameState.players.length;
+      const list = document.getElementById('lobby-players-list');
+      list.innerHTML = '';
+
+      gameState.players.forEach(p => {
+        const item = document.createElement('div');
+        item.className = 'flex items-center justify-between p-2 rounded-lg glass-card text-xs';
+        item.innerHTML = `
+          <div class="flex items-center space-x-2">
+            <span>${p.avatar}</span>
+            <span class="font-bold text-white">${p.name}</span>
+          </div>
+          <span class="text-[10px] text-emerald-400">Ready</span>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    function startOnlineGameHost() {
+      if (gameState.players.length < 2) {
+        alert('Need at least 2 players to start!');
+        return;
+      }
+      closeModal('modal-setup');
+      initGame(gameState.players);
+      broadcastGameState();
+    }
+
+    /* ==========================================================================
+       9. UI SETUP, MODALS & LOCAL CONTROLS
+       ========================================================================== */
+    function switchSetupTab(tab) {
+      if (tab === 'local') {
+        document.getElementById('setup-panel-local').classList.remove('hidden');
+        document.getElementById('setup-panel-online').classList.add('hidden');
+        document.getElementById('tab-btn-local').className = 'flex-1 py-2 rounded-lg font-bold text-sm transition bg-indigo-600 text-white shadow';
+        document.getElementById('tab-btn-online').className = 'flex-1 py-2 rounded-lg font-bold text-sm transition text-slate-400 hover:text-white';
+      } else {
+        document.getElementById('setup-panel-local').classList.add('hidden');
+        document.getElementById('setup-panel-online').classList.remove('hidden');
+        document.getElementById('tab-btn-local').className = 'flex-1 py-2 rounded-lg font-bold text-sm transition text-slate-400 hover:text-white';
+        document.getElementById('tab-btn-online').className = 'flex-1 py-2 rounded-lg font-bold text-sm transition bg-indigo-600 text-white shadow';
+      }
+    }
+
+    function startLocalGame() {
+      gameState.mode = 'local';
+      gameState.aiDifficulty = document.getElementById('select-ai-difficulty').value;
+      
+      document.getElementById('mode-badge').innerText = `VS AI (${gameState.aiDifficulty})`;
+      document.getElementById('room-badge').classList.add('hidden');
+
+      const humanName = document.getElementById('input-player-name').value || 'Player 1';
+      const totalCount = parseInt(document.getElementById('input-player-count').value);
+
+      const configs = [{
+        id: 'p_human',
+        name: humanName,
+        avatar: AVATARS[0],
+        color: COLORS[0],
+        isAI: false
+      }];
+
+      const aiNames = ['Bot Alpha', 'Cyber Snake', 'Robo Ladder', 'AI Master', 'Byte Bot', 'Shadow AI', 'Matrix', 'Neon Bot', 'Vortex'];
+      for (let i = 1; i < totalCount; i++) {
+        configs.push({
+          id: `p_ai_${i}`,
+          name: aiNames[i - 1],
+          avatar: AVATARS[i % AVATARS.length],
+          color: COLORS[i % COLORS.length],
+          isAI: true
+        });
+      }
+
+      closeModal('modal-setup');
+      initGame(configs);
+    }
+
+    function openModal(id) {
+      const modal = document.getElementById(id);
+      modal.classList.remove('opacity-0', 'pointer-events-none');
+      modal.firstElementChild.classList.remove('scale-95');
+      modal.firstElementChild.classList.add('scale-100');
+    }
+
+    function closeModal(id) {
+      const modal = document.getElementById(id);
+      modal.firstElementChild.classList.remove('scale-100');
+      modal.firstElementChild.classList.add('scale-95');
+      modal.classList.add('opacity-0', 'pointer-events-none');
+    }
+
+    function copyRoomCode() {
+      const code = document.getElementById('room-code-display').innerText;
+      navigator.clipboard.writeText(code);
+      showToast('📋', 'Copied!', 'Room code copied to clipboard.');
+    }
+
+    function toggleBGM() {
+      audio.bgmEnabled = !audio.bgmEnabled;
+      document.getElementById('icon-bgm').className = audio.bgmEnabled ? 'fa-solid fa-music text-indigo-400' : 'fa-solid fa-music-slash text-slate-500';
+      if (audio.bgmEnabled) audio.startBGM();
+      else audio.stopBGM();
+    }
+
+    function toggleSFX() {
+      audio.sfxEnabled = !audio.sfxEnabled;
+      document.getElementById('icon-sfx').className = audio.sfxEnabled ? 'fa-solid fa-volume-high text-indigo-400' : 'fa-solid fa-volume-xmark text-slate-500';
+    }
+
+    function updateBGMVolume(val) {
+      audio.bgmVolume = val / 100;
+      document.getElementById('val-bgm-vol').innerText = val + '%';
+    }
+
+    function updateSFXVolume(val) {
+      audio.sfxVolume = val / 100;
+      document.getElementById('val-sfx-vol').innerText = val + '%';
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    function saveStats() {
+      localStorage.setItem('snakes_stats', JSON.stringify(userStats));
+      updateStatsDisplay();
+    }
+
+    function updateStatsDisplay() {
+      document.getElementById('stat-played').innerText = userStats.played;
+      document.getElementById('stat-wins').innerText = userStats.wins;
+      document.getElementById('stat-ladders').innerText = userStats.ladders;
+      document.getElementById('stat-snakes').innerText = userStats.snakes;
+    }
+
+    function resetStats() {
+      userStats = { played: 0, wins: 0, ladders: 0, snakes: 0 };
+      saveStats();
+    }
+
+    /* ==========================================================================
+       10. INITIALIZATION ON PAGE LOAD
+       ========================================================================== */
+    window.addEventListener('load', () => {
+      createBoardUI();
+      updateStatsDisplay();
+      
+      // Auto-start default local match
+      startLocalGame();
+
+      // Start music on first user click interaction
+      window.addEventListener('click', () => {
+        audio.startBGM();
+      }, { once: true });
+    });
+
+    // Resize SVG paths on screen resize
+    window.addEventListener('resize', () => {
+      drawSnakesAndLaddersSVG();
+      renderTokens();
+    });
+  </script>
+</body>
+</html>
