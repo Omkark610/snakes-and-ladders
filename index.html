@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Snakes & Ladders: Ultimate Edition</title>
   
   <!-- Google AdSense -->
   <meta name="google-adsense-account" content="ca-pub-7963880628277539">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7963880628277539" crossorigin="anonymous"></script>
-
 
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-PGR4Y0TVNP"></script>
@@ -17,11 +18,7 @@
 
     gtag('config', 'G-PGR4Y0TVNP');
   </script>
-  
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Snakes & Ladders: Ultimate Edition</title>
-  
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- PeerJS CDN for WebRTC Multiplayer -->
@@ -475,6 +472,16 @@
 
         <!-- Online Room Lobby Box -->
         <div id="lobby-box" class="hidden space-y-3 pt-3 border-t border-slate-700/60">
+          <div class="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-between">
+            <div>
+              <span class="block text-[10px] uppercase font-bold text-indigo-300">Room Code</span>
+              <span id="lobby-room-code" class="text-xl font-mono font-black text-amber-300 tracking-widest">-----</span>
+            </div>
+            <button onclick="copyRoomCode()" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition flex items-center space-x-1 shadow">
+              <i class="fa-regular fa-copy"></i>
+              <span>Copy</span>
+            </button>
+          </div>
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-slate-400 uppercase">Lobby (<span id="lobby-count">1</span>/10)</span>
             <span class="text-xs text-emerald-400 font-mono" id="lobby-status">Waiting for players...</span>
@@ -1276,6 +1283,9 @@
         gameState.hostPeerId = gameState.myPeerId;
 
         document.getElementById('room-code-display').innerText = gameState.myPeerId;
+        const lobbyCodeElem = document.getElementById('lobby-room-code');
+        if (lobbyCodeElem) lobbyCodeElem.innerText = gameState.myPeerId;
+
         document.getElementById('room-badge').classList.remove('hidden');
         document.getElementById('mode-badge').innerText = 'Online P2P Host';
 
