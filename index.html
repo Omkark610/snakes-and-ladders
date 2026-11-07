@@ -933,6 +933,28 @@
       checkAITurn();
     }
 
+    /* AI TURN AUTOMATION */
+    function checkAITurn() {
+      if (gameState.gameOver || gameState.mode !== 'local') return;
+
+      const activePlayer = gameState.players[gameState.currentTurnIndex];
+      if (!activePlayer || !activePlayer.isAI) return;
+
+      // Determine AI delay based on selected difficulty
+      let delay = 1000;
+      if (gameState.aiDifficulty === 'easy') delay = 1400;
+      else if (gameState.aiDifficulty === 'competitive') delay = 600;
+
+      setTimeout(() => {
+        if (gameState.gameOver || gameState.isRolling || gameState.isMoving) return;
+        // Verify it is still the AI player's turn
+        const currentActive = gameState.players[gameState.currentTurnIndex];
+        if (currentActive && currentActive.id === activePlayer.id) {
+          executeRoll();
+        }
+      }, delay);
+    }
+
     function renderPlayerRoster() {
       const list = document.getElementById('player-list');
       document.getElementById('player-count-num').innerText = gameState.players.length;
@@ -1007,12 +1029,22 @@
       if (gameState.gameOver || gameState.isRolling || gameState.isMoving) return;
 
       const activePlayer = gameState.players[gameState.currentTurnIndex];
-      if (activePlayer.isAI) return; // Prevent human from rolling during AI turn
+      
+      // In local mode, prevent rolling during AI turns
+      if (gameState.mode === 'local' && activePlayer.isAI) return;
 
-      if (gameState.mode === 'online' && !gameState.isHost) {
-        // Send roll request to Host
-        broadcastToConnections({ type: 'REQ_ROLL', playerId: activePlayer.id });
-        return;
+      // In online mode, only allow rolling if it is strictly YOUR turn
+      if (gameState.mode === 'online') {
+        if (activePlayer.id !== gameState.myPeerId) {
+          showToast('⚠️', 'Not Your Turn', `It is ${activePlayer.name}'s turn!`);
+          return;
+        }
+
+        if (!gameState.isHost) {
+          // Client sends roll request to Host
+          broadcastToConnections({ type: 'REQ_ROLL', playerId: activePlayer.id });
+          return;
+        }
       }
 
       executeRoll();
@@ -1129,26 +1161,18 @@
       document.getElementById('active-avatar').innerText = activePlayer.avatar;
       document.getElementById('active-avatar').style.backgroundColor = activePlayer.color;
       document.getElementById('active-name').innerText = activePlayer.name;
-      document.getElementById('active-status').innerText = activePlayer.isAI ? 'AI thinking...' : 'Your turn to roll!';
 
       const btnRoll = document.getElementById('btn-roll');
-      btnRoll.disabled = activePlayer.isAI || gameState.isRolling || gameState.isMoving;
-    }
 
-    function checkAITurn() {
-      if (gameState.gameOver) return;
-
-      const activePlayer = gameState.players[gameState.currentTurnIndex];
-      if (activePlayer.isAI) {
-        let delay = 1200;
-        if (gameState.aiDifficulty === 'easy') delay = 1500;
-        if (gameState.aiDifficulty === 'competitive') delay = 800;
-
-        setTimeout(() => {
-          if (!gameState.gameOver && gameState.players[gameState.currentTurnIndex].id === activePlayer.id) {
-            executeRoll();
-          }
-        }, delay);
+      if (gameState.mode === 'online') {
+        const isMyTurn = activePlayer.id === gameState.myPeerId;
+        document.getElementById('active-status').innerText = isMyTurn ? 'It is YOUR turn!' : `Waiting for ${activePlayer.name}...`;
+        btnRoll.disabled = !isMyTurn || gameState.isRolling || gameState.isMoving;
+        btnRoll.innerHTML = isMyTurn ? `<i class="fa-solid fa-dice mr-2"></i> ROLL DICE` : `<i class="fa-solid fa-hourglass-half mr-2"></i> WAITING...`;
+      } else {
+        document.getElementById('active-status').innerText = activePlayer.isAI ? 'AI thinking...' : 'Your turn to roll!';
+        btnRoll.disabled = activePlayer.isAI || gameState.isRolling || gameState.isMoving;
+        btnRoll.innerHTML = `<i class="fa-solid fa-dice mr-2"></i> ROLL DICE`;
       }
     }
 
@@ -1365,7 +1389,11 @@
           renderTokens();
           updateTurnUI();
         } else if (data.type === 'REQ_ROLL' && gameState.isHost) {
-          executeRoll();
+          // Validate that the request comes from the player whose turn it currently is
+          const activePlayer = gameState.players[gameState.currentTurnIndex];
+          if (activePlayer && activePlayer.id === data.playerId) {
+            executeRoll();
+          }
         } else if (data.type === 'REACTION') {
           showToast(data.avatar, data.author, data.message);
         }
